@@ -1,6 +1,6 @@
 name: "Needle 2"
 description: "Run the Cactus Compute Needle 2 local tool-calling playground"
-version: "2.0.6-2"
+version: "2.0.6-3"
 slug: "addon_needle_2"
 url: "https://github.com/BelphegorPrime/ha-addon-collection/tree/main/addon-needle-2"
 arch:
@@ -9,6 +9,10 @@ arch:
 init: false
 startup: application
 boot: auto
+ingress: true
+ingress_port: 7860
+panel_icon: "mdi:needle"
+panel_title: "Needle 2"
 webui: "http://[HOST]:[PORT:7860]"
 watchdog: "http://[HOST]:[PORT:7860]/model"
 ports:
