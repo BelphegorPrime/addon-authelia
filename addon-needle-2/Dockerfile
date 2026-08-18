@@ -1,5 +1,6 @@
-ARG BUILD_FROM=python:3.11-slim-bookworm
-FROM ${BUILD_FROM}
+# Needle ships a manylinux (glibc) native library, so this add-on must use a
+# Debian/glibc image. Do not use Home Assistant's Alpine-based base image here.
+FROM python:3.11-slim-bookworm
 
 ARG BUILD_ARCH=amd64
 ARG NEEDLE_VERSION=2.0.6
