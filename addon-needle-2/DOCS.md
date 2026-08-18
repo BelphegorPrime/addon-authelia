@@ -351,6 +351,11 @@ settings.
 
 ### Conversation and Assist
 
+For an end-to-end, copy-and-paste setup using the add-on, Home Assistant
+custom sentences, safe response validation, and a voice pipeline, follow
+[Full Assist setup with Needle 2](FULL_ASSIST_SETUP.md). It starts with a
+working lighting example and tests each integration layer separately.
+
 This add-on does not register a Home Assistant
 [conversation agent](https://www.home-assistant.io/integrations/conversation/)
 and therefore cannot be selected directly as an Assist conversation agent.
@@ -766,6 +771,103 @@ In Node-RED, use an HTTP Request node, then a JSON node, a Switch node that
 checks the function name and confidence, and finally Home Assistant Call
 Service nodes. Apply the same allowlist and validation rules used in the YAML
 example.
+
+## Automatically expose a large Home Assistant installation
+
+You do not need to maintain one hand-written Needle tool for every entity.
+However, the add-on cannot discover Home Assistant entities by itself. Add-ons
+run separately from Home Assistant Core and do not register conversation
+entities or receive direct access to Home Assistant's entity and service
+registries.
+
+A companion Home Assistant custom integration can automate this process:
+
+1. read Home Assistant's entity, device, and area registries;
+2. include only entities explicitly exposed to Assist under
+   **Settings → Voice assistants → Expose**;
+3. group entities into a small set of domain-level Needle tools;
+4. populate tool enums with the currently allowed areas, entities, scenes, and
+   scripts;
+5. send those schemas to Needle with each request;
+6. validate the returned function and arguments against the same catalog;
+7. preserve the Home Assistant user context when dispatching the action; and
+8. refresh the catalog when entities or exposure settings change.
+
+Prefer a compact catalog such as:
+
+- `set_light(light_or_area, state, brightness)`;
+- `set_cover(cover_or_area, action, position)`;
+- `set_climate(climate_or_area, temperature, mode)`;
+- `activate_scene(scene)`;
+- `run_script(script)`;
+- `get_entity_state(entity)`;
+- `get_area_state(area, domain)`.
+
+For example, a generated lighting schema could resemble:
+
+```json
+{
+  "name": "set_light",
+  "description": "Control a light exposed to Assist",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "light": {
+        "type": "string",
+        "enum": ["living_room", "kitchen", "bedroom"]
+      },
+      "state": {
+        "type": "string",
+        "enum": ["on", "off"]
+      },
+      "brightness": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100
+      }
+    },
+    "required": ["light", "state"],
+    "additionalProperties": false
+  }
+}
+```
+
+The custom integration must map each stable enum value to an actual entity ID.
+Needle must never be allowed to invent entity IDs.
+
+Sensors normally belong in read-only state tools or selectively supplied
+context rather than becoming individual executable tools. Lights, selected
+scenes and scripts, media players, and bounded climate controls are reasonable
+candidates for automatic exposure. Locks, garage doors, covers, alarms,
+purchases, deletion, and externally visible messages should require explicit
+confirmation or remain unavailable.
+
+### Do not create an unrestricted service tool
+
+Do not give Needle a generic tool like:
+
+```text
+call_service(domain, service, entity_id, data)
+```
+
+Although this would provide access to nearly every Home Assistant capability,
+it would also let model output select arbitrary services, targets, and service
+data. A JSON schema and a confidence score are not security boundaries.
+
+For every returned call, the companion integration must verify:
+
+1. the function is allowlisted;
+2. the entity or area is currently exposed;
+3. all arguments have expected names and types;
+4. values satisfy enum and numeric restrictions;
+5. the requested operation is compatible with the entity domain;
+6. the originating Home Assistant context is authorized;
+7. confidence meets the configured threshold; and
+8. any required confirmation has completed and not expired.
+
+This provides automatic coverage for a large installation without manually
+maintaining hundreds of tools, while keeping Home Assistant—not the model—as
+the authorization and execution boundary.
 
 ## Integration design recommendations
 
