@@ -1,0 +1,24 @@
+name: "Needle 2"
+description: "Run the Cactus Compute Needle 2 local tool-calling playground"
+version: "2.0.6-1"
+slug: "addon_needle_2"
+url: "https://github.com/BelphegorPrime/ha-addon-collection/tree/main/addon-needle-2"
+arch:
+  - aarch64
+  - amd64
+init: false
+startup: application
+boot: auto
+webui: "http://[HOST]:[PORT:7860]"
+watchdog: "http://[HOST]:[PORT:7860]/model"
+ports:
+  7860/tcp: 7860
+ports_description:
+  7860/tcp: "Needle playground web interface"
+map:
+  - type: share
+    read_only: false
+options:
+  weights: ""
+schema:
+  weights: str
