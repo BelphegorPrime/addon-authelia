@@ -23,6 +23,22 @@ RUN apt-get update \
         tini \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m pip install --no-cache-dir "cactus-needle==${NEEDLE_VERSION}" \
+    # Needle 2.0.6 uses origin-root URLs (for example /style.css and /model).
+    # Home Assistant ingress mounts the app below a tokenized path, so make all
+    # bundled UI resources and API calls relative to that ingress path.
+    && playground="/usr/local/lib/python3.11/site-packages/needle/playground" \
+    && grep -Fq 'href="/style.css"' "${playground}/index.html" \
+    && grep -Fq 'src="/app.js"' "${playground}/index.html" \
+    && grep -Fq 'fetch("/' "${playground}/app.js" \
+    && grep -Fq 'dl.href = "/download/' "${playground}/app.js" \
+    && sed -i \
+        -e 's|href="/style.css"|href="./style.css"|g' \
+        -e 's|src="/app.js"|src="./app.js"|g' \
+        "${playground}/index.html" \
+    && sed -i \
+        -e 's|fetch("/|fetch("./|g' \
+        -e 's|dl.href = "/download/|dl.href = "./download/|g' \
+        "${playground}/app.js" \
     && case "${BUILD_ARCH}" in \
         amd64) platform_tag="manylinux2014_x86_64" ;; \
         aarch64) platform_tag="manylinux2014_aarch64" ;; \

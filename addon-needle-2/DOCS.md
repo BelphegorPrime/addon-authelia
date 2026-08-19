@@ -28,11 +28,16 @@ Home Assistant's `armv7` architecture.
 
 4. Find **Needle 2** in the store and install it.
 5. Start the add-on.
-6. Select **Open Web UI**.
+6. Select **Open Web UI**, or select **Needle 2** in the Home Assistant sidebar.
 
 The first start can take a while while Needle initializes its model. Home
 Assistant's watchdog and the container health check wait for the `/model`
 endpoint to become available.
+
+The sidebar and **Open Web UI** views use Home Assistant ingress. The add-on
+rewrites Needle's bundled root-relative static, API, and download URLs at image
+build time so they remain below Home Assistant's tokenized ingress path. Direct
+access through the configured port remains supported.
 
 ## How Needle fits into Home Assistant
 
@@ -936,6 +941,12 @@ path such as `/share/model.cact`.
 
 Check that port `7860` is not already used by another add-on. You can assign a
 different host port under the add-on's **Network** settings.
+
+If the ingress page loads without styling or browser developer tools show
+requests to the Home Assistant origin such as `/style.css`, confirm that add-on
+version `2.0.6-4` or newer is installed. Rebuild or reinstall the add-on after
+refreshing its repository metadata; restarting an older container does not
+update the bundled playground files.
 
 ### A custom model fails to load
 
